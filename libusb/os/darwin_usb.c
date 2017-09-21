@@ -304,22 +304,101 @@ static usb_device_t **darwin_device_from_service (io_service_t service)
   return device;
 }
 
+static int get_device_parent_sessionID(io_service_t service, UInt64 *parent_sessionID);
+
+static int find_parent(io_service_t* array, size_t size, size_t service_index, size_t* parent_index)
+{
+	size_t i;
+	UInt64 parent_id;
+	int ret;
+
+	if(array[service_index] == 0 || service_index == size -1)
+		return 0;
+
+	ret = get_device_parent_sessionID(array[service_index], &parent_id);
+	if(!ret)
+		return 0;
+
+	for(i = service_index + 1; i < size; ++i) {
+		if(parent_id == array[i])
+			return 1;
+	}
+
+	return 0;
+}
+
+static void sort_element(io_service_t* array, size_t size, size_t service_index)
+{
+	size_t parent_index;
+	io_service_t temp;
+	if(!find_parent(array, size, service_index, &parent_index))
+		return;
+
+	temp = array[service_index];
+	array[service_index] = array[parent_index];
+	array[parent_index] = temp;
+
+	sort_element(array, size, service_index);
+}
+
+static void sort(io_service_t* array, size_t size)
+{
+	size_t i;
+
+	for(i = 0; i < size; ++i) {
+		sort_element(array, size, i);
+	}
+}
+
+struct service_list
+{
+	struct list_head list;
+	io_service_t service;
+};
+
 static void darwin_devices_attached (void *ptr, io_iterator_t add_devices) {
   struct libusb_context *ctx;
   io_service_t service;
+	size_t size = 0;
+	size_t i = 0;
+	struct list_head service_list_head;
+	struct service_list* service_list_entry;
+	io_service_t* services;
 
-  usbi_mutex_lock(&active_contexts_lock);
+	list_init(&service_list_head);
+	while ((service = IOIteratorNext(add_devices))) {
 
-  while ((service = IOIteratorNext(add_devices))) {
-    /* add this device to each active context's device list */
-    list_for_each_entry(ctx, &active_contexts_list, list, struct libusb_context) {
-      process_new_device (ctx, service);;
-    }
+		service_list_entry = malloc(sizeof(struct service_list));
+		service_list_entry->service = service;
+		list_add(&service_list_entry->list, &service_list_head);
+		++size;
+	}
+	services = malloc(sizeof(io_service_t) * size);
 
-    IOObjectRelease(service);
-  }
+	while(!list_empty(&service_list_head)) {
+		service_list_entry = list_first_entry(&service_list_head, struct service_list, list);
+		services[i++] = service_list_entry->service;
+		list_del(&service_list_entry->list);
+		free(service_list_entry);
+	}
+
+	sort(services, size);
+
+	usbi_mutex_lock(&active_contexts_lock);
+
+	list_for_each_entry(ctx, &active_contexts_list, list, struct libusb_context)  {
+		for (i = 0; i < size; ++i) {
+			process_new_device(ctx, services[i]);
+		}
+	}
 
   usbi_mutex_unlock(&active_contexts_lock);
+
+	for(i = 0; i < size; ++i) {
+		IOObjectRelease(services[i]);
+	}
+
+	free(services);
 }
 
 static void darwin_devices_detached (void *ptr, io_iterator_t rem_devices) {

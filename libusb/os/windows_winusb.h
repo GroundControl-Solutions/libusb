@@ -62,16 +62,16 @@
 // http://msdn.microsoft.com/en-us/library/ff545972.aspx
 // http://msdn.microsoft.com/en-us/library/ff545982.aspx
 #ifndef GUID_DEVINTERFACE_USB_HOST_CONTROLLER
-const GUID GUID_DEVINTERFACE_USB_HOST_CONTROLLER = { 0x3ABF6F2D, 0x71C4, 0x462A, {0x8A, 0x92, 0x1E, 0x68, 0x61, 0xE6, 0xAF, 0x27} };
+static const GUID GUID_DEVINTERFACE_USB_HOST_CONTROLLER = { 0x3ABF6F2D, 0x71C4, 0x462A, {0x8A, 0x92, 0x1E, 0x68, 0x61, 0xE6, 0xAF, 0x27} };
 #endif
 #ifndef GUID_DEVINTERFACE_USB_DEVICE
-const GUID GUID_DEVINTERFACE_USB_DEVICE = { 0xA5DCBF10, 0x6530, 0x11D2, {0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED} };
+static const GUID GUID_DEVINTERFACE_USB_DEVICE = { 0xA5DCBF10, 0x6530, 0x11D2, {0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED} };
 #endif
 #ifndef GUID_DEVINTERFACE_USB_HUB
-const GUID GUID_DEVINTERFACE_USB_HUB = { 0xF18A0E88, 0xC30C, 0x11D0, {0x88, 0x15, 0x00, 0xA0, 0xC9, 0x06, 0xBE, 0xD8} };
+static const GUID GUID_DEVINTERFACE_USB_HUB = { 0xF18A0E88, 0xC30C, 0x11D0, {0x88, 0x15, 0x00, 0xA0, 0xC9, 0x06, 0xBE, 0xD8} };
 #endif
 #ifndef GUID_DEVINTERFACE_LIBUSB0_FILTER
-const GUID GUID_DEVINTERFACE_LIBUSB0_FILTER = { 0xF9F3FF14, 0xAE21, 0x48A0, {0x8A, 0x25, 0x80, 0x11, 0xA7, 0xA9, 0x31, 0xD9} };
+static const GUID GUID_DEVINTERFACE_LIBUSB0_FILTER = { 0xF9F3FF14, 0xAE21, 0x48A0, {0x8A, 0x25, 0x80, 0x11, 0xA7, 0xA9, 0x31, 0xD9} };
 #endif
 
 
@@ -407,6 +407,11 @@ typedef struct _USB_CONFIGURATION_DESCRIPTOR_SHORT {
 	USB_DESCRIPTOR_REQUEST req;
 	USB_CONFIGURATION_DESCRIPTOR desc;
 } USB_CONFIGURATION_DESCRIPTOR_SHORT;
+
+typedef struct _USB_STRING_DESCRIPTOR_SHORT {
+	USB_DESCRIPTOR_REQUEST req;
+	char desc[2 * MAX_USB_STRING_LENGTH];
+} USB_STRING_DESCRIPTOR_SHORT;
 
 typedef struct USB_INTERFACE_DESCRIPTOR {
 	UCHAR bLength;
@@ -783,6 +788,9 @@ typedef struct _HIDP_VALUE_CAPS {
 		} NotRange;
 	} u;
 } HIDP_VALUE_CAPS, *PHIDP_VALUE_CAPS;
+
+int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid, unsigned char* data,
+                                int length);
 
 DLL_DECLARE_HANDLE(hid);
 DLL_DECLARE_FUNC(WINAPI, BOOL, HidD_GetAttributes, (HANDLE, PHIDD_ATTRIBUTES));

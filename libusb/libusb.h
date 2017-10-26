@@ -74,6 +74,7 @@ typedef unsigned __int32  uint32_t;
  * in your sources, we force windows.h to be included first. */
 #if defined(_WIN32) || defined(__CYGWIN__) || defined(_WIN32_WCE)
 #include <windows.h>
+#include <setupapi.h>
 #if defined(interface)
 #undef interface
 #endif
@@ -1788,6 +1789,9 @@ static inline int libusb_get_string_descriptor(libusb_device_handle *dev_handle,
 
 int LIBUSB_CALL libusb_get_string_descriptor_ascii(libusb_device_handle *dev_handle,
 	uint8_t desc_index, unsigned char *data, int length);
+
+int LIBUSB_CALL libusb_get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid,
+                                                   unsigned char* data, int length);
 
 /* polling and timeouts */
 

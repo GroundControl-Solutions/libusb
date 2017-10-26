@@ -1189,3 +1189,15 @@ int API_EXPORTED libusb_get_string_descriptor_ascii(libusb_device_handle *dev_ha
 	data[di] = 0;
 	return di;
 }
+
+#ifdef _WIN32
+
+#include "os/windows_winusb.h"
+
+int API_EXPORTED libusb_get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid,
+                                                   unsigned char* data, int length)
+{
+	return get_string_descriptor_win32(dev, desc_index, langid, data, length);
+}
+
+#endif

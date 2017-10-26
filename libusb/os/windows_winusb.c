@@ -4293,4 +4293,65 @@ static int composite_copy_transfer_data(int sub_api, struct usbi_transfer *itran
 		copy_transfer_data(priv->usb_interface[transfer_priv->interface_number].sub_api, itransfer, io_size);
 }
 
+int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid, unsigned char* data,
+                                int length)
+{
+	HANDLE handle;
+	struct windows_device_priv *parent_priv;
+	struct windows_device_priv *priv;
+	char* device_id;
+	struct libusb_context *ctx;
+	DWORD size;
+	DWORD ret_size;
+	USB_STRING_DESCRIPTOR_SHORT str_desc_buf_short; // dummy request
+	PUSB_CONFIGURATION_DESCRIPTOR cd_data;
+	WINBOOL ret;
+
+	if(desc_index == 0)
+		return LIBUSB_ERROR_INVALID_PARAM;
+
+	ctx = DEVICE_CTX(dev);
+	parent_priv = _device_priv(dev->parent_dev);
+	priv = _device_priv(dev);
+	device_id = priv->path;
+	handle = CreateFileA(parent_priv->path, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+	                                  FILE_FLAG_OVERLAPPED, NULL);
+	if (handle == INVALID_HANDLE_VALUE) {
+		usbi_warn(ctx, "could not open hub %s: %s", parent_priv->path, windows_error_str(0));
+		return LIBUSB_ERROR_ACCESS;
+	}
+
+	size = sizeof(str_desc_buf_short);
+	memset(&str_desc_buf_short, 0, size);
+
+	str_desc_buf_short.req.ConnectionIndex = (ULONG)priv->port;
+	str_desc_buf_short.req.SetupPacket.bmRequest = LIBUSB_ENDPOINT_IN;
+	str_desc_buf_short.req.SetupPacket.bRequest = LIBUSB_REQUEST_GET_DESCRIPTOR;
+	str_desc_buf_short.req.SetupPacket.wValue = (LIBUSB_DT_STRING << 8) | desc_index;
+	str_desc_buf_short.req.SetupPacket.wIndex = langid;
+	str_desc_buf_short.req.SetupPacket.wLength = (USHORT)sizeof(str_desc_buf_short.desc);
+
+	ret = DeviceIoControl(handle, IOCTL_USB_GET_DESCRIPTOR_FROM_NODE_CONNECTION, &str_desc_buf_short, size,
+	                     &str_desc_buf_short, size, &ret_size, NULL);
+	CloseHandle(handle);
+	if(!ret)
+	{
+		usbi_info(ctx, "could not access configuration descriptor (dummy) for '%s': %s", device_id, windows_error_str(0));
+
+		return LIBUSB_ERROR_IO;
+	}
+
+	if(ret_size - sizeof(str_desc_buf_short.req) < 2)
+		return LIBUSB_ERROR_IO;
+	if(ret_size % 2 != 0 || str_desc_buf_short.desc[1] != 3) //USB_STRING_DESCRIPTOR_TYPE
+		return LIBUSB_ERROR_IO;
+
+	if(str_desc_buf_short.desc[0] != ret_size - sizeof(str_desc_buf_short.req))
+		return LIBUSB_ERROR_IO;
+
+	memcpy(data, str_desc_buf_short.desc + 2, (unsigned char)(str_desc_buf_short.desc[0] - 2));
+
+	return (unsigned char)(str_desc_buf_short.desc[0] - 2);
+}
+
 #endif /* !USE_USBDK */

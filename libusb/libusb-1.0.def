@@ -98,6 +98,8 @@ EXPORTS
   libusb_get_ss_usb_device_capability_descriptor@12 = libusb_get_ss_usb_device_capability_descriptor
   libusb_get_string_descriptor_ascii
   libusb_get_string_descriptor_ascii@16 = libusb_get_string_descriptor_ascii
+  libusb_get_string_descriptor_win32
+  libusb_get_string_descriptor_win32@20 = libusb_get_string_descriptor_win32
   libusb_get_usb_2_0_extension_descriptor
   libusb_get_usb_2_0_extension_descriptor@12 = libusb_get_usb_2_0_extension_descriptor
   libusb_get_version

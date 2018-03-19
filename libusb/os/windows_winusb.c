@@ -4293,6 +4293,11 @@ static int composite_copy_transfer_data(int sub_api, struct usbi_transfer *itran
 		copy_transfer_data(priv->usb_interface[transfer_priv->interface_number].sub_api, itransfer, io_size);
 }
 
+typedef struct _CORRECT_USB_STRING_DESCRIPTOR_SHORT {
+	USB_DESCRIPTOR_REQUEST req;
+	unsigned char desc[2 * MAX_USB_STRING_LENGTH];
+} CORRECT_USB_STRING_DESCRIPTOR_SHORT; //Don't know what changing the original USB_STRING_DESCRIPTOR_SHORT will fix, but desc is supposed to be unsigned
+
 int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid, unsigned char* data,
                                 int length)
 {
@@ -4303,7 +4308,7 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	struct libusb_context *ctx;
 	DWORD size;
 	DWORD ret_size;
-	USB_STRING_DESCRIPTOR_SHORT str_desc_buf_short; // dummy request
+	CORRECT_USB_STRING_DESCRIPTOR_SHORT str_desc_buf_short; // dummy request
 	PUSB_CONFIGURATION_DESCRIPTOR cd_data;
 	WINBOOL ret;
 

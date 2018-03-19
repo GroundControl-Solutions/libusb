@@ -4354,9 +4354,9 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	if(str_desc_buf_short.desc[0] != ret_size - sizeof(str_desc_buf_short.req))
 		return LIBUSB_ERROR_IO;
 
-	memcpy(data, str_desc_buf_short.desc + 2, (unsigned char)(str_desc_buf_short.desc[0] - 2));
+	memcpy(data, str_desc_buf_short.desc + 2, str_desc_buf_short.desc[0] - 2);
 
-	return (unsigned char)(str_desc_buf_short.desc[0] - 2);
+	return str_desc_buf_short.desc[0] - 2;
 }
 
 #endif /* !USE_USBDK */

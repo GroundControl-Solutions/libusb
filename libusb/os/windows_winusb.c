@@ -4063,22 +4063,17 @@ static int composite_copy_transfer_data(int sub_api, struct usbi_transfer *itran
 		copy_transfer_data(priv->usb_interface[current_interface].sub_api, itransfer, io_size);
 }
 
-typedef struct _CORRECT_USB_STRING_DESCRIPTOR_SHORT {
-	USB_DESCRIPTOR_REQUEST req;
-	unsigned char desc[2 * MAX_USB_STRING_LENGTH];
-} CORRECT_USB_STRING_DESCRIPTOR_SHORT; //Don't know what changing the original USB_STRING_DESCRIPTOR_SHORT will fix, but desc is supposed to be unsigned
-
 int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid, unsigned char* data,
                                 int length)
 {
 	HANDLE handle;
-	struct windows_device_priv *parent_priv;
-	struct windows_device_priv *priv;
+	struct winusb_device_priv *parent_priv;
+	struct winusb_device_priv *priv;
 	char* device_id;
 	struct libusb_context *ctx;
 	DWORD size;
 	DWORD ret_size;
-	CORRECT_USB_STRING_DESCRIPTOR_SHORT str_desc_buf_short; // dummy request
+	USB_STRING_DESCRIPTOR_SHORT str_desc_buf_short; // dummy request
 	PUSB_CONFIGURATION_DESCRIPTOR cd_data;
 	WINBOOL ret;
 
@@ -4099,7 +4094,7 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	size = sizeof(str_desc_buf_short);
 	memset(&str_desc_buf_short, 0, size);
 
-	str_desc_buf_short.req.ConnectionIndex = (ULONG)priv->port;
+	str_desc_buf_short.req.ConnectionIndex = (ULONG)libusb_get_port_number(dev);
 	str_desc_buf_short.req.SetupPacket.bmRequest = LIBUSB_ENDPOINT_IN;
 	str_desc_buf_short.req.SetupPacket.bRequest = LIBUSB_REQUEST_GET_DESCRIPTOR;
 	str_desc_buf_short.req.SetupPacket.wValue = (LIBUSB_DT_STRING << 8) | desc_index;

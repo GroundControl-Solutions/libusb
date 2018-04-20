@@ -205,6 +205,7 @@ static BOOL init_dlls(void)
 	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiGetDeviceInstanceIdA, TRUE);
 	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiGetDeviceInterfaceDetailA, TRUE);
 	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiGetDeviceRegistryPropertyA, TRUE);
+	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiGetDevicePropertyW, TRUE);
 	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiDestroyDeviceInfoList, TRUE);
 	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiOpenDevRegKey, TRUE);
 	DLL_LOAD_FUNC_PREFIXED(SetupAPI, p, SetupDiOpenDeviceInterfaceRegKey, TRUE);
@@ -1444,8 +1445,10 @@ static int winusb_get_device_list(struct libusb_context *ctx, struct discovered_
 				}
 				break;
 			case HCD_PASS:
-				r = enumerate_hcd_root_hub(ctx, dev_id, (uint8_t)(i + 1), dev_info_data.DevInst);
+			{
+				r = enumerate_hcd_root_hub(ctx, dev_id, (uint8_t) (i + 1), dev_info_data.DevInst);
 				break;
+			}
 			case GEN_PASS:
 				// The SPDRP_ADDRESS for USB devices is the device port number on the hub
 				port_nr = 0;
@@ -4069,7 +4072,7 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	HANDLE handle;
 	struct winusb_device_priv *parent_priv;
 	struct winusb_device_priv *priv;
-	char* device_id;
+	char* path;
 	struct libusb_context *ctx;
 	DWORD size;
 	DWORD ret_size;
@@ -4083,9 +4086,9 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	ctx = DEVICE_CTX(dev);
 	parent_priv = _device_priv(dev->parent_dev);
 	priv = _device_priv(dev);
-	device_id = priv->path;
-	handle = CreateFileA(parent_priv->path, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-	                                  FILE_FLAG_OVERLAPPED, NULL);
+	path = priv->path;
+	handle = CreateFileA(parent_priv->path, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,
+	                     NULL);
 	if (handle == INVALID_HANDLE_VALUE) {
 		usbi_warn(ctx, "could not open hub %s: %s", parent_priv->path, windows_error_str(0));
 		return LIBUSB_ERROR_ACCESS;
@@ -4106,7 +4109,7 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	CloseHandle(handle);
 	if(!ret)
 	{
-		usbi_info(ctx, "could not access configuration descriptor (dummy) for '%s': %s", device_id, windows_error_str(0));
+		usbi_info(ctx, "could not access configuration descriptor (dummy) for '%s': %s", path, windows_error_str(0));
 
 		return LIBUSB_ERROR_IO;
 	}
@@ -4122,4 +4125,16 @@ int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t
 	memcpy(data, str_desc_buf_short.desc + 2, str_desc_buf_short.desc[0] - 2);
 
 	return str_desc_buf_short.desc[0] - 2;
+}
+
+int get_device_instance_id_win32(libusb_device* dev, char* data, int length)
+{
+	struct winusb_device_priv* priv = (struct winusb_device_priv*) dev->os_priv;
+	int len = strlen(priv->dev_id) + 1;
+	if(len < length || !data)
+		return len;
+
+	strcpy(data, priv->dev_id);
+
+	return len;
 }

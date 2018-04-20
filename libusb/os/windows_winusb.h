@@ -261,6 +261,13 @@ typedef DWORD DEVNODE, DEVINST;
 typedef DEVNODE *PDEVNODE, *PDEVINST;
 typedef DWORD RETURN_TYPE;
 typedef RETURN_TYPE CONFIGRET;
+typedef GUID DEVPROPGUID, *PDEVPROPGUID;
+typedef ULONG DEVPROPID, *PDEVPROPID;
+typedef struct _DEVPROPKEY {
+	DEVPROPGUID fmtid;
+	DEVPROPID pid;
+} DEVPROPKEY, *PDEVPROPKEY;
+typedef ULONG DEVPROPTYPE, *PDEVPROPTYPE;
 
 #define CR_SUCCESS	0x00000000
 
@@ -290,6 +297,8 @@ DLL_DECLARE_FUNC_PREFIXED(WINAPI, BOOL, p, SetupDiGetDeviceInterfaceDetailA, (HD
 			PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA));
 DLL_DECLARE_FUNC_PREFIXED(WINAPI, BOOL, p, SetupDiGetDeviceRegistryPropertyA, (HDEVINFO,
 			PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD));
+DLL_DECLARE_FUNC_PREFIXED(WINAPI, BOOL, p, SetupDiGetDevicePropertyW, (HDEVINFO, PSP_DEVINFO_DATA,
+		const DEVPROPKEY*, DEVPROPTYPE*, PBYTE, DWORD, PDWORD, DWORD));
 DLL_DECLARE_FUNC_PREFIXED(WINAPI, BOOL, p, SetupDiDestroyDeviceInfoList, (HDEVINFO));
 DLL_DECLARE_FUNC_PREFIXED(WINAPI, HKEY, p, SetupDiOpenDevRegKey, (HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM));
 DLL_DECLARE_FUNC_PREFIXED(WINAPI, HKEY, p, SetupDiOpenDeviceInterfaceRegKey, (HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, DWORD));
@@ -706,6 +715,7 @@ typedef struct _HIDP_VALUE_CAPS {
 
 int get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid, unsigned char* data,
                                 int length);
+int get_device_instance_id_win32(libusb_device* dev, char* data, int length);
 
 DLL_DECLARE_HANDLE(hid);
 DLL_DECLARE_FUNC(WINAPI, VOID, HidD_GetHidGuid, (LPGUID));

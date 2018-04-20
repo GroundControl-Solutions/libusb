@@ -1797,6 +1797,7 @@ int LIBUSB_CALL libusb_get_string_descriptor_ascii(libusb_device_handle *dev_han
 
 int LIBUSB_CALL libusb_get_string_descriptor_win32(libusb_device* dev, uint8_t desc_index, uint16_t langid,
                                                    unsigned char* data, int length);
+int LIBUSB_CALL libusb_get_device_instance_id_win32(libusb_device* dev, char* data, int length);
 
 /* polling and timeouts */
 

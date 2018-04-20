@@ -1201,4 +1201,9 @@ int API_EXPORTED libusb_get_string_descriptor_win32(libusb_device* dev, uint8_t 
 	return get_string_descriptor_win32(dev, desc_index, langid, data, length);
 }
 
+int API_EXPORTED libusb_get_device_instance_id_win32(libusb_device* dev, char* data, int length)
+{
+	return get_device_instance_id_win32(dev, data, length);
+}
+
 #endif

@@ -2021,8 +2021,10 @@ static int handle_timeouts_locked(struct libusb_context *ctx)
 		if (!timerisset(cur_tv))
 			return 0;
 
+		transfer->timeout_flags |= USBI_TRANSFER_TIMED_OUT;
+
 		/* ignore timeouts we've already handled */
-		if (transfer->timeout_flags & (USBI_TRANSFER_TIMEOUT_HANDLED | USBI_TRANSFER_OS_HANDLES_TIMEOUT))
+		if (transfer->timeout_flags & (USBI_TRANSFER_TIMEOUT_HANDLED))
 			continue;
 
 		/* if transfer has non-expired timeout, nothing more to do */
@@ -2152,6 +2154,19 @@ static int handle_events(struct libusb_context *ctx, struct timeval *tv)
 	usbi_dbg("poll() returned %d", r);
 	if (r == 0) {
 		r = handle_timeouts(ctx);
+		int ret = 0;
+		struct usbi_transfer *itransfer;
+		usbi_mutex_lock(&ctx->event_data_lock);
+		while (ret == 0 && !list_empty(&ctx->completed_transfers)) {
+			itransfer = list_first_entry(&ctx->completed_transfers, struct usbi_transfer, completed_list);
+			list_del(&itransfer->completed_list);
+			usbi_mutex_unlock(&ctx->event_data_lock);
+			ret = usbi_backend.handle_transfer_completion(itransfer);
+			if (ret)
+				usbi_err(ctx, "backend handle_transfer_completion failed with error %d", ret);
+			usbi_mutex_lock(&ctx->event_data_lock);
+		}
+		usbi_mutex_unlock(&ctx->event_data_lock);
 		goto done;
 	} else if (r == -1 && errno == EINTR) {
 		r = LIBUSB_ERROR_INTERRUPTED;

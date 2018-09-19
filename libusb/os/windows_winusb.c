@@ -838,6 +838,8 @@ static int init_device(struct libusb_device *dev, struct libusb_device *parent_d
 
 		dev->bus_number = bus_number;
 		dev->port_number = port_number;
+		if(dev->parent_dev == NULL)
+			libusb_ref_device(parent_dev);
 		dev->parent_dev = parent_dev;
 		priv->depth = depth;
 
@@ -1491,9 +1493,9 @@ static int winusb_get_device_list(struct libusb_context *ctx, struct discovered_
 						break;
 					}
 				}
-				libusb_unref_device(parent_dev);
 				break;
 			}
+			libusb_unref_device(parent_dev);
 		}
 	}
 

@@ -25,6 +25,8 @@
 #include "windows_common.h"
 #include "windows_nt_common.h"
 
+#include <devpropdef.h>
+
 #if defined(_MSC_VER)
 // disable /W4 MSVC warnings that are benign
 #pragma warning(disable:4100)  // unreferenced formal parameter
@@ -261,13 +263,6 @@ typedef DWORD DEVNODE, DEVINST;
 typedef DEVNODE *PDEVNODE, *PDEVINST;
 typedef DWORD RETURN_TYPE;
 typedef RETURN_TYPE CONFIGRET;
-typedef GUID DEVPROPGUID, *PDEVPROPGUID;
-typedef ULONG DEVPROPID, *PDEVPROPID;
-typedef struct _DEVPROPKEY {
-	DEVPROPGUID fmtid;
-	DEVPROPID pid;
-} DEVPROPKEY, *PDEVPROPKEY;
-typedef ULONG DEVPROPTYPE, *PDEVPROPTYPE;
 
 #define CR_SUCCESS	0x00000000
 

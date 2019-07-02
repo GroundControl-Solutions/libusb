@@ -719,10 +719,16 @@ void usbi_connect_device(struct libusb_device *dev)
 void usbi_disconnect_device(struct libusb_device *dev)
 {
 	struct libusb_context *ctx = DEVICE_CTX(dev);
+	int was_attached = 0;
 
 	usbi_mutex_lock(&dev->lock);
+	was_attached = dev->attached;
 	dev->attached = 0;
 	usbi_mutex_unlock(&dev->lock);
+
+	if (!was_attached)
+		// The device has already been removed from the list and a hotplug notification has already been sent
+		return;
 
 	usbi_mutex_lock(&ctx->usb_devs_lock);
 	list_del(&dev->list);

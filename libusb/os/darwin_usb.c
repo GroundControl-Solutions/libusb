@@ -1037,6 +1037,14 @@ static int darwin_get_cached_device(struct libusb_context *ctx, io_service_t ser
     list_add(&new_device->list, &darwin_cached_devices);
 
     (*device)->GetDeviceAddress (device, (USBDeviceAddress *)&new_device->address);
+    int address = 0;
+    int got_address = get_ioregistry_value_number(service, CFSTR(kUSBDevicePropertyAddress), kCFNumberIntType, (void*)&address);
+    if(!got_address)
+    {
+        usbi_dbg("Failed to get address from CFNumberRef");
+        address = 0;
+    }
+    new_device->address = address;
 
     /* keep a reference to this device */
     darwin_ref_cached_device(new_device);

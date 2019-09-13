@@ -711,7 +711,11 @@ void usbi_connect_device(struct libusb_device *dev)
 	/* Signal that an event has occurred for this device if we support hotplug AND
 	 * the hotplug message list is ready. This prevents an event from getting raised
 	 * during initial enumeration. */
-	if (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) && dev->ctx->hotplug_msgs.next) {
+	usbi_mutex_lock(&ctx->event_data_lock);
+	int send_notification = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) && dev->ctx->hotplug_msgs.next;
+	usbi_mutex_unlock(&ctx->event_data_lock);
+
+	if (send_notification) {
 		usbi_hotplug_notification(ctx, dev, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED);
 	}
 }
@@ -738,7 +742,10 @@ void usbi_disconnect_device(struct libusb_device *dev)
 	 * the hotplug message list is ready. This prevents an event from getting raised
 	 * during initial enumeration. libusb_handle_events will take care of dereferencing
 	 * the device. */
-	if (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) && dev->ctx->hotplug_msgs.next) {
+	usbi_mutex_lock(&ctx->event_data_lock);
+	int send_notification = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG) && dev->ctx->hotplug_msgs.next;
+	usbi_mutex_unlock(&ctx->event_data_lock);
+	if (send_notification) {
 		usbi_hotplug_notification(ctx, dev, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT);
 	}
 }
